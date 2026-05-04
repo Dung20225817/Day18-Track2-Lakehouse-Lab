@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Bonus Challenge Day 18 — Trillion-Token Training Corpus | Topic B</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --vin-red: #B41E2D;
+    --vin-blue: #002855;
+    --vin-gold: #C9A961;
+    --bg-dark: #0E1530;
+    --bg-card: #1A2444;
+    --text-light: #F0F4FF;
+    --text-muted: #9AA8C7;
+    --bronze: #CD7F32;
+    --silver: #C0C0C0;
+    --gold: #FFD700;
+    --green: #4ADE80;
+    --red: #F87171;
+    --blue: #60A5FA;
+    --purple: #A78BFA;
+    --orange: #FB923C;
+    --teal: #2DD4BF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: var(--bg-dark);
+    color: var(--text-light);
+    font-family: -apple-system, "SF Pro Display", "Segoe UI", "Helvetica Neue", "Noto Sans", sans-serif;
+    overflow: hidden;
+  }
+  .deck { position: relative; width: 100vw; height: 100vh; }
+  .slide {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    padding: 36px 60px 60px;
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+    animation: fadeIn 0.35s ease-in-out;
+  }
+  .slide.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  h1 { font-size: 2.4em; color: var(--vin-gold); margin-bottom: 10px; line-height: 1.2; }
+  h2 { font-size: 1.55em; color: var(--vin-gold); margin-bottom: 16px; border-bottom: 2px solid var(--vin-red); padding-bottom: 6px; }
+  h3 { font-size: 1.15em; color: var(--blue); margin: 12px 0 7px; }
+  h4 { font-size: 1.02em; color: var(--orange); margin: 8px 0 5px; }
+  p, li { font-size: 0.97em; line-height: 1.55; color: var(--text-light); }
+  ul, ol { padding-left: 22px; margin: 7px 0; }
+  li { margin-bottom: 4px; }
+  code {
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    background: rgba(255,255,255,0.08);
+    padding: 2px 6px; border-radius: 4px;
+    color: var(--vin-gold); font-size: 0.9em;
+  }
+  pre {
+    background: #0A1228;
+    border-left: 3px solid var(--blue);
+    padding: 10px 14px; border-radius: 6px;
+    overflow-x: auto;
+    font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+    font-size: 0.79em; line-height: 1.42;
+    color: #E5E9F0; margin: 8px 0;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px; color: var(--text-muted); font-size: 0.83em;
+  }
+  .header .brand { color: var(--vin-red); font-weight: 700; letter-spacing: 0.5px; }
+  .footer {
+    position: absolute; bottom: 10px; left: 60px; right: 60px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.77em; color: var(--text-muted);
+    border-top: 1px solid rgba(255,255,255,0.1); padding-top: 7px;
+  }
+  .nav {
+    position: fixed; bottom: 12px; right: 16px;
+    display: flex; gap: 6px; z-index: 100;
+  }
+  .nav button {
+    background: var(--vin-blue); color: var(--text-light);
+    border: 1px solid var(--vin-gold); border-radius: 4px;
+    padding: 6px 12px; cursor: pointer; font-size: 0.9em;
+  }
+  .nav button:hover { background: var(--vin-red); }
+  .progress {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: var(--vin-gold); transition: width 0.3s; z-index: 100;
+  }
+
+  /* Title slide */
+  .title-slide {
+    align-items: center; justify-content: center; text-align: center;
+    background: radial-gradient(circle at 30% 40%, rgba(180,30,45,0.25) 0%, transparent 60%),
+                radial-gradient(circle at 70% 60%, rgba(0,40,85,0.4) 0%, transparent 70%);
+  }
+  .title-slide h1 {
+    font-size: 3em; margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--vin-gold) 0%, #FFE9A8 50%, var(--vin-red) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .title-slide .subtitle { font-size: 1.3em; color: var(--text-muted); margin-bottom: 26px; }
+  .title-slide .badge {
+    display: inline-block; padding: 6px 14px;
+    background: var(--vin-red); color: white;
+    border-radius: 16px; font-size: 0.88em; margin-bottom: 14px;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .title-slide .author {
+    margin-top: 26px; padding: 14px 24px;
+    background: rgba(255,255,255,0.05); border-radius: 8px;
+    border: 1px solid rgba(201,169,97,0.3);
+  }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card); border-radius: 8px;
+    padding: 12px 16px; border-left: 3px solid var(--vin-gold);
+  }
+  .card.bronze { border-left-color: var(--bronze); }
+  .card.silver { border-left-color: var(--silver); }
+  .card.gold { border-left-color: var(--gold); }
+  .card.green { border-left-color: var(--green); }
+  .card.red { border-left-color: var(--red); }
+  .card.blue { border-left-color: var(--blue); }
+  .card.purple { border-left-color: var(--purple); }
+  .card.orange { border-left-color: var(--orange); }
+  .card.teal { border-left-color: var(--teal); }
+  .card .label {
+    font-size: 0.73em; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-muted); margin-bottom: 4px;
+  }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.87em; }
+  th {
+    background: var(--vin-blue); color: var(--vin-gold);
+    text-align: left; padding: 8px 11px;
+    border-bottom: 2px solid var(--vin-gold);
+  }
+  td { padding: 7px 11px; border-bottom: 1px solid rgba(255,255,255,0.08); vertical-align: top; }
+  tr:hover td { background: rgba(255,255,255,0.03); }
+  td.win { color: var(--green); }
+  td.lose { color: var(--red); }
+  td.mid { color: var(--orange); }
+
+  /* Insight callout */
+  .insight {
+    margin-top: 14px; padding: 10px 14px;
+    background: linear-gradient(90deg, rgba(201,169,97,0.15) 0%, rgba(201,169,97,0.02) 100%);
+    border-left: 3px solid var(--vin-gold); border-radius: 4px;
+    font-style: italic; color: #FFE9A8;
+  }
+  .insight::before { content: "🤔 Tôi nhận ra: "; font-weight: 700; font-style: normal; }
+
+  /* Warning callout */
+  .warning {
+    margin-top: 12px; padding: 10px 14px;
+    background: rgba(248,113,113,0.1);
+    border-left: 3px solid var(--red); border-radius: 4px;
+    color: #FCA5A5;
+  }
+  .warning::before { content: "⚠️ Rủi ro: "; font-weight: 700; }
+
+  /* Pipeline */
+  .pipeline {
+    display: flex; align-items: stretch; justify-content: space-between;
+    padding: 14px; background: rgba(255,255,255,0.03);
+    border-radius: 8px; margin: 8px 0;
+    gap: 6px;
+  }
+  .stage {
+    flex: 1; text-align: center; padding: 10px 8px;
+    background: var(--bg-card); border-radius: 6px;
+    border-top: 3px solid var(--vin-gold);
+  }
+  .stage.bronze { border-top-color: var(--bronze); }
+  .stage.silver { border-top-color: var(--silver); }
+  .stage.gold { border-top-color: var(--gold); }
+  .stage.blue { border-top-color: var(--blue); }
+  .stage.purple { border-top-color: var(--purple); }
+  .stage h4 { margin-top: 0; font-size: 0.95em; }
+  .stage .icon { font-size: 1.6em; margin-bottom: 5px; }
+  .stage p { font-size: 0.78em; color: var(--text-muted); margin-top: 4px; }
+  .arrow { color: var(--vin-gold); font-size: 1.4em; display: flex; align-items: center; padding: 0 2px; flex-shrink: 0; }
+
+  /* Big numbers */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 12px 0; }
+  .stat-card {
+    text-align: center; padding: 14px;
+    background: var(--bg-card); border-radius: 8px;
+    border-bottom: 3px solid var(--vin-gold);
+  }
+  .stat-card .num { font-size: 1.9em; font-weight: 800; color: var(--vin-gold); display: block; }
+  .stat-card .lbl { font-size: 0.78em; color: var(--text-muted); margin-top: 3px; }
+
+  /* Decision matrix */
+  .matrix-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.9em; }
+  .matrix-row.header { font-weight: bold; color: var(--vin-gold); border-bottom: 2px solid var(--vin-gold); }
+  .matrix-row.winner { background: rgba(74,222,128,0.08); border-left: 3px solid var(--green); padding-left: 8px; }
+
+  /* Pills */
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.73em; font-weight: bold; }
+  .pill.green { background: rgba(74,222,128,0.2); color: var(--green); border: 1px solid var(--green); }
+  .pill.red { background: rgba(248,113,113,0.2); color: var(--red); border: 1px solid var(--red); }
+  .pill.orange { background: rgba(251,146,60,0.2); color: var(--orange); border: 1px solid var(--orange); }
+  .pill.blue { background: rgba(96,165,250,0.2); color: var(--blue); border: 1px solid var(--blue); }
+
+  /* Failure mode boxes */
+  .failure-box {
+    background: rgba(248,113,113,0.07);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;
+  }
+  .failure-box .fm-title { font-weight: 700; color: var(--red); margin-bottom: 6px; }
+  .failure-box .fm-detect { color: var(--orange); font-size: 0.88em; }
+  .failure-box .fm-rollback { color: var(--green); font-size: 0.88em; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<!-- ══════════════════════════ SLIDE 1: Title ══════════════════════════ -->
+<section class="slide title-slide active">
+  <div class="badge">Bonus Challenge — Day 18 Track 2 · Topic B</div>
+  <h1>Trillion-Token Training Corpus<br>với Provenance</h1>
+  <p class="subtitle">Thiết kế Lakehouse cho sách giáo khoa dạy AI<br>— 30 TB → 3 TB → 1 TB, với license tracking & shard revert < 30 phút</p>
+  <div class="author">
+    <p style="font-size: 0.95em; margin-bottom: 4px;"><strong>Chủ đề:</strong> B — Trillion-token training corpus với provenance</p>
+    <p style="color: var(--text-muted); font-size: 0.9em;">VinUni · AI20k · Day 18 — Track 2: Data Lakehouse Architecture</p>
+    <p style="color: var(--text-muted); font-size: 0.85em; margin-top: 4px;">📅 04/05/2026</p>
+  </div>
+  <p style="margin-top: 26px; font-size: 0.85em; color: var(--text-muted);">▶ Bấm <strong>→</strong> hoặc <strong>Space</strong> để chuyển slide</p>
+</section>
+
+<!-- ══════════════════════════ SLIDE 2: Tại sao chọn Topic B ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>BRAINSTORM · Slide 2/16</span></div>
+  <h2>🧠 Tại sao chọn Topic B?</h2>
+  <p style="margin-bottom: 10px;">Ma trận quyết định — 5 tiêu chí, 1–5 điểm:</p>
+  <div style="font-size: 0.84em;">
+    <div class="matrix-row header">
+      <span>Topic</span>
+      <span style="text-align:center;">Dùng đủ<br>medallion?</span>
+      <span style="text-align:center;">Time travel<br>bắt buộc?</span>
+      <span style="text-align:center;">Data<br>governance?</span>
+      <span style="text-align:center;">Gần AI<br>workflow?</span>
+      <span style="text-align:center;">Tổng</span>
+    </div>
+    <div class="matrix-row winner">
+      <span><strong>📚 B — Training Corpus</strong></span>
+      <span style="text-align:center;">5</span>
+      <span style="text-align:center;">5</span>
+      <span style="text-align:center;">5</span>
+      <span style="text-align:center;">5</span>
+      <span style="text-align:center; color: var(--green); font-weight:bold;">20 ⭐</span>
+    </div>
+    <div class="matrix-row">
+      <span>🤖 A — LLM Observability</span>
+      <span style="text-align:center;">4</span>
+      <span style="text-align:center;">3</span>
+      <span style="text-align:center;">3</span>
+      <span style="text-align:center;">4</span>
+      <span style="text-align:center;">14</span>
+    </div>
+    <div class="matrix-row">
+      <span>🚖 C — Ride-hailing CDC (Decree 13)</span>
+      <span style="text-align:center;">5</span>
+      <span style="text-align:center;">3</span>
+      <span style="text-align:center;">5</span>
+      <span style="text-align:center;">2</span>
+      <span style="text-align:center;">15</span>
+    </div>
+    <div class="matrix-row">
+      <span>📄 D — Multimodal RAG</span>
+      <span style="text-align:center;">3</span>
+      <span style="text-align:center;">4</span>
+      <span style="text-align:center;">3</span>
+      <span style="text-align:center;">4</span>
+      <span style="text-align:center;">14</span>
+    </div>
+    <div class="matrix-row">
+      <span>💰 E — FinOps click-stream</span>
+      <span style="text-align:center;">4</span>
+      <span style="text-align:center;">2</span>
+      <span style="text-align:center;">2</span>
+      <span style="text-align:center;">2</span>
+      <span style="text-align:center;">10</span>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-top:12px;">
+    <div class="card green">
+      <div class="label">✅ Lý do chọn B</div>
+      <ul>
+        <li>Time travel <strong>bắt buộc</strong> — phải chứng minh checkpoint nào dùng shard nào</li>
+        <li>License governance phức tạp → test đúng Day 18 concepts</li>
+        <li>Cross-region (US scrape, EU train) → interesting FinOps trade-off</li>
+        <li>Revert shard < 30 phút → test RESTORE mechanism thật</li>
+      </ul>
+    </div>
+    <div class="card orange">
+      <div class="label">⚠️ Tại sao không chọn A (LLM Observability)</div>
+      <ul>
+        <li>Bài mẫu đã là Topic A → tránh trùng, không học thêm được gì</li>
+        <li>Governance ít phức tạp hơn (không có license tracking)</li>
+        <li>Time travel không <em>bắt buộc</em>, chỉ nice-to-have</li>
+      </ul>
+    </div>
+  </div>
+  <div class="insight"><strong>Topic B thắng</strong> vì nó ép tôi phải dùng <em>tất cả</em> Day 18 concepts: medallion, ACID, time travel, catalog versioning (Nessie), lineage, governance. Không topic nào cover đủ như vậy.</div>
+  <div class="footer"><span>Decision matrix</span><span>2 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 3: Problem Statement ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>PROBLEM · Slide 3/16</span></div>
+  <h2>🎯 Problem Statement</h2>
+  <div class="stats">
+    <div class="stat-card"><span class="num">30 TB</span><span class="lbl">raw web crawl<br>(US region)</span></div>
+    <div class="stat-card"><span class="num">3 TB</span><span class="lbl">sau MinHash-LSH<br>dedup (Silver)</span></div>
+    <div class="stat-card"><span class="num">1 TB</span><span class="lbl">curated training<br>set (Gold)</span></div>
+    <div class="stat-card"><span class="num">&lt; 30 phút</span><span class="lbl">revert 1 shard<br>SLA</span></div>
+  </div>
+  <div class="grid-2">
+    <div class="card red">
+      <div class="label">😱 Pain points</div>
+      <ul>
+        <li>Không biết checkpoint nào đã train trên shard nào</li>
+        <li>Contamination report → không biết rollback từ đâu</li>
+        <li>License <code>unknown</code> lẫn vào training → rủi ro pháp lý</li>
+        <li>Scrape US, train EU → 30 TB cross-region transfer = $900/month</li>
+        <li>Re-train sau revert phải dùng đúng corpus đã sửa</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <div class="label">✅ Success criteria</div>
+      <ul>
+        <li>Mỗi shard có <strong>license tag</strong> (CC-BY, MIT, proprietary, unknown) từ Bronze</li>
+        <li>Mỗi training checkpoint → có <strong>Nessie commit ID</strong> trỏ đúng Gold snapshot</li>
+        <li>Contamination detected → revert shard cụ thể + re-tag + re-train trong <strong>&lt; 30 phút</strong></li>
+        <li>Chỉ transfer <strong>Silver (3 TB)</strong> sang EU, không transfer Bronze (30 TB)</li>
+        <li>Audit log cho mọi lần <strong>license override</strong> (ai, khi nào, lý do)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card blue" style="margin-top:12px;">
+    <div class="label">🌏 Context thực tế (như RedPajama)</div>
+    <p>Web crawl từ Common Crawl snapshots (CC-MAIN-2024-*). Hai region: <strong>us-east-1</strong> (scrape + Bronze) và <strong>eu-west-1</strong> (Silver, Gold, training jobs). 4 license buckets: <code>cc-by</code>, <code>mit</code>, <code>proprietary</code>, <code>unknown</code>. Training jobs chỉ được đọc shard có license <code>cc-by</code> hoặc <code>mit</code>.</p>
+  </div>
+  <div class="insight">Constraint "revert trong 30 phút" là constraint <em>cứng</em>, không negotiable. Nó loại ngay mọi architecture không có time travel native — tức là không thể dùng plain S3 Parquet hoặc Hive-style overwrite.</div>
+  <div class="footer"><span>Problem framing</span><span>3 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 4: Architecture Diagram ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>DESIGN · Slide 4/16</span></div>
+  <h2>🏗️ Kiến trúc tổng thể (một diagram duy nhất)</h2>
+  <div class="pipeline">
+    <div class="stage blue">
+      <div class="icon">🕷️</div>
+      <h4>Crawler</h4>
+      <p>CC-MAIN snapshots<br>us-east-1</p>
+    </div>
+    <span class="arrow">→</span>
+    <div class="stage bronze">
+      <div class="icon">🥉</div>
+      <h4>Bronze</h4>
+      <p>Raw WARC/text<br>30 TB, license tagged<br><code>us-east-1</code></p>
+    </div>
+    <span class="arrow">→</span>
+    <div class="stage silver">
+      <div class="icon">🥈</div>
+      <h4>Silver</h4>
+      <p>MinHash dedup<br>3 TB, quality filtered<br><code>eu-west-1</code></p>
+    </div>
+    <span class="arrow">→</span>
+    <div class="stage gold">
+      <div class="icon">🥇</div>
+      <h4>Gold</h4>
+      <p>Curated shards<br>1 TB, license = safe<br><code>eu-west-1</code></p>
+    </div>
+    <span class="arrow">→</span>
+    <div class="stage purple">
+      <div class="icon">🧠</div>
+      <h4>Training</h4>
+      <p>GPU cluster<br>Nessie branch per<br>checkpoint</p>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-top: 12px;">
+    <div>
+      <div class="card blue" style="margin-bottom:10px;">
+        <div class="label">Catalog & Versioning</div>
+        <p><strong>Project Nessie</strong> — Git-like branching. Mỗi training run = 1 branch. Commit ID = provenance anchor. REST Catalog cho cross-engine query (Spark + DuckDB + Trino).</p>
+      </div>
+      <div class="card bronze">
+        <div class="label">Bronze (us-east-1)</div>
+        <p>S3 Standard 7 ngày → Glacier. Partition: <code>crawl_date / source_domain</code>. License tag gắn ngay khi landing. Không bao giờ xóa — chỉ lifecycle sang Glacier.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card silver" style="margin-bottom:10px;">
+        <div class="label">Silver (eu-west-1)</div>
+        <p>Spark MinHash-LSH dedup job. <strong>Chỉ transfer Silver</strong> (3 TB) sang EU — không transfer Bronze. Delta table, partition: <code>crawl_date / license</code>. Deletion vectors cho revert.</p>
+      </div>
+      <div class="card gold">
+        <div class="label">Gold (eu-west-1) + Provenance</div>
+        <p>1 TB shards, <code>license IN ('cc-by','mit')</code> only. <strong>Provenance table</strong>: <code>(checkpoint_id, shard_id, nessie_commit, ts)</code>. RESTORE từ Nessie tag trong &lt; 30 phút.</p>
+      </div>
+    </div>
+  </div>
+  <div class="insight">Insight quan trọng nhất của diagram: Bronze ở US, Silver + Gold ở EU. Đây là quyết định FinOps: transfer 3 TB (Silver) thay vì 30 TB (Bronze) tiết kiệm ~$540/tháng egress cost.</div>
+  <div class="footer"><span>Architecture overview</span><span>4 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 5: Decision 1 — Table Format ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>DECISION 1 · Slide 5/16</span></div>
+  <h2>⚖️ Quyết định 1: Table Format — Delta vs Iceberg vs Hudi</h2>
+  <table>
+    <thead>
+      <tr><th>Tiêu chí</th><th>Delta Lake</th><th>Apache Iceberg</th><th>Apache Hudi</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Workload chính</td>
+        <td class="win">Append-heavy + MERGE</td>
+        <td class="win">Append-heavy + MERGE</td>
+        <td class="mid">Upsert-heavy (CDC)</td>
+      </tr>
+      <tr>
+        <td>RESTORE single shard &lt; 30 phút</td>
+        <td class="win">✅ <code>RESTORE VERSION AS OF</code> + Deletion Vectors</td>
+        <td class="win">✅ <code>rollback(snapshotId)</code></td>
+        <td class="lose">❌ phức tạp hơn, không native restore</td>
+      </tr>
+      <tr>
+        <td>Branching / version isolation</td>
+        <td class="win">✅ qua Nessie catalog</td>
+        <td class="win">✅ native Nessie support tốt hơn</td>
+        <td class="lose">❌ không hỗ trợ Nessie natively</td>
+      </tr>
+      <tr>
+        <td>Deletion Vectors (soft delete)</td>
+        <td class="win">✅ Delta 2.x+</td>
+        <td class="win">✅ Position Delete Files</td>
+        <td class="mid">❌ mark-deleted, không built-in</td>
+      </tr>
+      <tr>
+        <td>Cross-engine (Spark + Trino + DuckDB)</td>
+        <td class="mid">Tốt (delta-rs cho DuckDB)</td>
+        <td class="win">✅ tốt nhất (REST Catalog native)</td>
+        <td class="lose">Chủ yếu Spark</td>
+      </tr>
+      <tr>
+        <td>UniForm / interop</td>
+        <td class="win">✅ Delta UniForm → đọc như Iceberg</td>
+        <td class="mid">N/A</td>
+        <td class="lose">Không có</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="card green" style="margin-top:12px;">
+    <div class="label">🏆 Chọn: Delta Lake + UniForm + Nessie catalog</div>
+    <p>
+      <strong>Tôi chọn Delta</strong> vì: (1) RESTORE + Deletion Vectors đáp ứng SLA 30 phút; (2) UniForm cho phép Trino đọc như Iceberg — tránh vendor lock; (3) delta-rs cho phép DuckDB query ad-hoc không cần Spark cluster.
+      <br><strong>Tôi loại Iceberg</strong> vì: dù branching Nessie tốt hơn, Delta UniForm đã cover use case cross-engine — không đủ lý do để chuyển toàn bộ ecosystem.
+      <br><strong>Tôi loại Hudi</strong> vì: training corpus là append-dominant, không phải upsert-heavy. Hudi tối ưu cho CDC workload (Topic C), không phải topic này. Và không có native Nessie support = mất branching.
+    </p>
+  </div>
+  <div class="insight">Loại một format không phải vì format đó "tệ" — mà vì workload <em>này</em> không match strength của nó. Hudi rất tốt cho CDC; nhưng training corpus = append + RESTORE, không phải upsert stream.</div>
+  <div class="footer"><span>Format decision</span><span>5 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 6: Decision 2 — Catalog ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>DECISION 2 · Slide 6/16</span></div>
+  <h2>⚖️ Quyết định 2: Catalog — Nessie vs Unity Catalog vs AWS Glue</h2>
+  <table>
+    <thead>
+      <tr><th>Tiêu chí</th><th>Project Nessie</th><th>Databricks Unity Catalog</th><th>AWS Glue Catalog</th><th>Apache Polaris</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Branching per training run</td>
+        <td class="win">✅ Git-like branch/tag</td>
+        <td class="lose">❌ không có branching</td>
+        <td class="lose">❌ không có branching</td>
+        <td class="mid">Có nhưng immature</td>
+      </tr>
+      <tr>
+        <td>Provenance (checkpoint → shard)</td>
+        <td class="win">✅ commit SHA = anchor</td>
+        <td class="mid">Cần custom table</td>
+        <td class="mid">Cần custom table</td>
+        <td class="mid">Cần custom table</td>
+      </tr>
+      <tr>
+        <td>Vendor lock-in</td>
+        <td class="win">✅ Open source, Apache 2.0</td>
+        <td class="lose">❌ Databricks-only</td>
+        <td class="mid">AWS-only</td>
+        <td class="win">✅ Apache incubating</td>
+      </tr>
+      <tr>
+        <td>REST Catalog spec</td>
+        <td class="win">✅ native</td>
+        <td class="mid">Delta Sharing (khác spec)</td>
+        <td class="lose">❌ không có REST Catalog</td>
+        <td class="win">✅ native</td>
+      </tr>
+      <tr>
+        <td>Ops complexity</td>
+        <td class="mid">Tự host (Docker/K8s)</td>
+        <td class="win">Managed hoàn toàn</td>
+        <td class="win">Managed hoàn toàn</td>
+        <td class="mid">Tự host hoặc Snowflake managed</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="card green" style="margin-top:12px;">
+    <div class="label">🏆 Chọn: Project Nessie (self-hosted, RocksDB backend)</div>
+    <p>
+      <strong>Tôi chọn Nessie</strong> vì branching là killer feature: mỗi training run tạo branch <code>train/run-{timestamp}</code>, tag khi checkpoint xong → commit SHA là provenance anchor bất biến. Khi contamination xảy ra, chỉ cần <code>RESTORE TABLE AS OF tag</code> trên branch đó.
+      <br><strong>Tôi loại Unity Catalog</strong> vì: vendor lock-in (Databricks). Nếu muốn chạy training trên AWS SageMaker hoặc GCP Vertex, Unity không theo được.
+      <br><strong>Tôi loại Glue</strong> vì: không có branching, không có time travel semantics ở catalog level — chỉ là registry đơn giản.
+      <br><strong>Tôi loại Polaris</strong> vì: còn đang incubating (Apache), production readiness chưa đủ cho workload critical này.
+    </p>
+  </div>
+  <div class="footer"><span>Catalog decision</span><span>6 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 7: Decision 3 — Dedup Strategy ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>DECISION 3 · Slide 7/16</span></div>
+  <h2>⚖️ Quyết định 3: Dedup — MinHash-LSH vs Exact SHA vs Bloom Filter</h2>
+  <div class="grid-2">
+    <div>
+      <table>
+        <thead><tr><th>Method</th><th>False Positive</th><th>Near-dup?</th><th>30 TB cost</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>MinHash-LSH</strong></td>
+            <td class="win">~1–2%</td>
+            <td class="win">✅ detect near-dup</td>
+            <td class="mid">~$55/run (Spark spot)</td>
+          </tr>
+          <tr>
+            <td>Exact SHA-256</td>
+            <td class="win">0%</td>
+            <td class="lose">❌ chỉ exact dup</td>
+            <td class="win">~$10/run</td>
+          </tr>
+          <tr>
+            <td>Bloom Filter</td>
+            <td class="lose">5–10%</td>
+            <td class="lose">❌ chỉ exact</td>
+            <td class="win">~$5/run</td>
+          </tr>
+          <tr>
+            <td>SimHash</td>
+            <td class="mid">~3%</td>
+            <td class="win">✅ near-dup</td>
+            <td class="win">~$20/run</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card blue">
+      <div class="label">Tại sao near-duplicate detection quan trọng?</div>
+      <p>Web crawl có <strong>~40–60% near-duplicate</strong> content: boilerplate nav/footer, scraped blog reposts, mirrors. Nếu chỉ dùng Exact SHA, <strong>vẫn còn 30–50% near-dup</strong> trong Silver — model sẽ overfit trên boilerplate. RedPajama report: MinHash giảm thêm 50% document so với SHA-only.</p>
+    </div>
+  </div>
+  <div class="card green" style="margin-top:12px;">
+    <div class="label">🏆 Chọn: MinHash-LSH (datasketch library, Spark UDF)</div>
+    <p>
+      <strong>Tôi chọn MinHash-LSH</strong> vì: (1) near-duplicate detection không thể bỏ qua với 30 TB web crawl; (2) 1–2% false positive rate chấp nhận được (những document bị loại nhầm không quan trọng hơn việc giữ near-dup); (3) $55/run với Spark spot instances là affordable.
+      <br><strong>Tôi loại Exact SHA</strong> vì: miss near-duplicates hoàn toàn — bài toán này <em>bắt buộc</em> detect near-dup.
+      <br><strong>Tôi loại Bloom Filter</strong> vì: false positive 5–10% quá cao, có thể loại nhầm unique content tốt.
+      <br><strong>Tôi loại SimHash</strong> vì: false positive 3% cao hơn MinHash, và tooling Spark kém hơn (datasketch MinHash có Spark integration tốt hơn).
+    </p>
+  </div>
+  <div class="insight">Dedup <em>phải</em> chạy ở Silver transformation, không phải Bronze. Bronze = raw immutable. Chạy dedup ở Bronze sẽ làm mất khả năng audit (không biết document nào đã bị loại và tại sao).</div>
+  <div class="footer"><span>Dedup strategy</span><span>7 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 8: Decision 4 — Multi-region ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>DECISION 4 · Slide 8/16</span></div>
+  <h2>⚖️ Quyết định 4: Multi-region — Transfer Bronze vs Silver vs Dual-write</h2>
+  <div class="card red" style="margin-bottom:12px;">
+    <div class="label">❌ Option A: Transfer toàn bộ Bronze (30 TB) sang EU</div>
+    <p><strong>Cost:</strong> 30 TB × $0.02/GB = $600/month egress + $690/month storage ở EU = <strong>$1,290/month thêm</strong>. Không justify được — Bronze là raw, EU training job không cần raw WARC files.</p>
+  </div>
+  <div class="card orange" style="margin-bottom:12px;">
+    <div class="label">⚠️ Option B: Dual-write (scrape → cả US và EU Bronze đồng thời)</div>
+    <p><strong>Vấn đề:</strong> Consistency phức tạp. Nếu write US thành công nhưng EU fail → inconsistent. Retry storm khi network partition. Chi phí cao hơn Option C vì vẫn transfer 30 TB. <strong>Loại.</strong></p>
+  </div>
+  <div class="card green">
+    <div class="label">✅ Option C (Chọn): Bronze ở US → MinHash ở US → Transfer Silver (3 TB) sang EU</div>
+    <ul>
+      <li>Chạy MinHash-LSH Spark job <strong>tại us-east-1</strong> (gần Bronze data, tránh egress Bronze)</li>
+      <li>Chỉ transfer <strong>Silver 3 TB</strong> sang eu-west-1: 3 TB × $0.02/GB = <strong>$60/month</strong></li>
+      <li>Silver + Gold + Training chạy hoàn toàn ở <strong>eu-west-1</strong></li>
+      <li>Nessie catalog: dual-region replication của catalog metadata (nhỏ, vài MB)</li>
+    </ul>
+  </div>
+  <div class="grid-2" style="margin-top:12px;">
+    <div class="card blue">
+      <div class="label">Trade-off chấp nhận</div>
+      <p>Silver transformation (MinHash) chạy ở US thay vì EU. Nếu EU có data residency regulation cho raw web data, cần review. Trong scope này (public web crawl), không có vấn đề.</p>
+    </div>
+    <div class="card purple">
+      <div class="label">Latency Bronze → Silver</div>
+      <p>MinHash job chạy US, transfer xong mới start Silver job EU. Thêm ~15 phút so với single-region. Chấp nhận được vì pipeline này là <em>batch</em>, không streaming.</p>
+    </div>
+  </div>
+  <div class="insight">Quyết định "transfer Silver thay vì Bronze" tiết kiệm <strong>$540/month</strong> egress ($600 - $60). Con số này nhỏ trong context startup lớn, nhưng với 12 tháng = $6,480 — đủ để thuê 1 GPU instance thêm 1 tháng.</div>
+  <div class="footer"><span>Multi-region strategy</span><span>8 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 9: Decision 5 — License Tagging ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>DECISION 5 · Slide 9/16</span></div>
+  <h2>⚖️ Quyết định 5: License Tagging — Khi nào gắn tag?</h2>
+  <div class="grid-3">
+    <div class="card red">
+      <div class="label">❌ Tại crawl time (ở Crawler)</div>
+      <ul>
+        <li>Crawler không reliable — timeout, partial metadata</li>
+        <li>Nếu robot.txt thay đổi sau crawl, không biết</li>
+        <li>Không audit trail (ai tag, khi nào, từ source nào)</li>
+        <li><strong>Loại</strong>: không kiểm soát được quality</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <div class="label">✅ Tại Bronze landing (chọn)</div>
+      <ul>
+        <li>Gắn ngay khi nhận WARC file: parse <code>robots.txt</code> + Creative Commons metadata</li>
+        <li>Default: <code>unknown</code> nếu không tìm thấy license info</li>
+        <li>Audit log: <code>license_source</code>, <code>license_tagged_at</code>, <code>tagger_version</code></li>
+        <li>Override sau: chỉ qua workflow có approval, log đầy đủ</li>
+      </ul>
+    </div>
+    <div class="card orange">
+      <div class="label">⚠️ Tại Silver (sau dedup)</div>
+      <ul>
+        <li>Proprietary content đã lưu vào Bronze không tagged</li>
+        <li>Nếu Bronze bị query trực tiếp, nguy cơ leak proprietary</li>
+        <li>Near-duplicate có thể ghép content từ 2 license khác nhau</li>
+        <li><strong>Loại</strong>: quá muộn</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card blue" style="margin-top:14px;">
+    <div class="label">🏆 Chi tiết: Bronze License Schema</div>
+    <pre><code>-- Bronze table: mỗi document có license metadata từ landing
+license          STRING,  -- 'cc-by', 'mit', 'proprietary', 'unknown'
+license_source   STRING,  -- 'robots_txt', 'cc_meta_tag', 'heuristic', 'default'
+license_version  STRING,  -- 'CC-BY-4.0', 'MIT-2024', ...
+license_tagged_at TIMESTAMP,
+tagger_version   STRING,  -- 'license-tagger-v2.1.0'
+license_override_by STRING -- NULL nếu không có override, else user_id</code></pre>
+  </div>
+  <div class="insight">Default <code>unknown</code> là quyết định quan trọng. Nếu default <code>cc-by</code>, proprietary content sẽ lọt vào Gold. Nếu default <code>proprietary</code>, quá nhiều content tốt bị loại. <strong>Conservative default + human review workflow</strong> tốt hơn aggressive default.</div>
+  <div class="footer"><span>License governance</span><span>9 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 10: Decision 6 — Provenance Tracking ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>DECISION 6 · Slide 10/16</span></div>
+  <h2>⚖️ Quyết định 6: Provenance — Custom Table vs OpenLineage vs MLflow</h2>
+  <table>
+    <thead>
+      <tr><th>Approach</th><th>Granularity</th><th>Query "checkpoint X dùng shard nào?"</th><th>Overhead</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Custom provenance table</strong> (chọn)</td>
+        <td class="win">Shard-level</td>
+        <td class="win">SQL đơn giản: <code>WHERE checkpoint_id = ?</code></td>
+        <td class="win">Minimal</td>
+      </tr>
+      <tr>
+        <td>OpenLineage + Marquez</td>
+        <td class="mid">Job-level (dataset in/out)</td>
+        <td class="mid">Phải traverse lineage graph, không native shard-level</td>
+        <td class="lose">Emitter overhead + Marquez infra</td>
+      </tr>
+      <tr>
+        <td>MLflow</td>
+        <td class="lose">Artifact-level (model, không phải data)</td>
+        <td class="lose">Không thiết kế cho data shard tracking</td>
+        <td class="win">Nhẹ</td>
+      </tr>
+      <tr>
+        <td>Delta table history (tự suy)</td>
+        <td class="mid">Table-level version</td>
+        <td class="mid">Có thể suy ra nhưng fragile, không explicit</td>
+        <td class="win">Zero overhead</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="card green" style="margin-top:12px;">
+    <div class="label">🏆 Chọn: Custom Provenance Delta Table + Nessie Commit Tags</div>
+    <pre><code>-- gold.training_provenance (Delta table, eu-west-1)
+checkpoint_id    STRING,    -- 'chk-20260504-001'
+shard_id         STRING,    -- 'gold/shard-0042'
+nessie_commit    STRING,    -- Nessie branch commit SHA (immutable anchor)
+nessie_branch    STRING,    -- 'train/run-20260504'
+included_at      TIMESTAMP,
+license          STRING,    -- license của shard lúc đưa vào training
+document_count   BIGINT,
+token_count      BIGINT</code></pre>
+    <p style="margin-top:8px;"><strong>Tôi loại OpenLineage</strong> vì: nó tốt cho job-level DAG, không đủ granular cho shard-level query ("shard X có mặt trong checkpoint nào?"). Overhead của Marquez không justify cho use case này.<br>
+    <strong>Tôi loại MLflow</strong> vì: thiết kế cho model artifacts, không phải training data shards. Cần custom extension quá nhiều.</p>
+  </div>
+  <div class="footer"><span>Provenance decision</span><span>10 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 11: Schemas (Bronze / Silver / Gold) ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>SCHEMA · Slide 11/16</span></div>
+  <h2>📋 Schema Bronze → Silver → Gold</h2>
+  <div class="grid-3">
+    <div class="card bronze">
+      <div class="label">🥉 Bronze (us-east-1) — Raw, immutable</div>
+      <pre><code>doc_id      STRING  -- UUID
+crawl_date  DATE    -- partition key
+domain      STRING  -- partition key
+url         STRING
+raw_text    STRING
+warc_path   STRING
+byte_length BIGINT
+lang_detect STRING
+license     STRING  -- gắn tại landing
+license_source STRING
+license_tagged_at TIMESTAMP
+ingested_at TIMESTAMP
+schema_version STRING -- 'v1'</code></pre>
+    </div>
+    <div class="card silver">
+      <div class="label">🥈 Silver (eu-west-1) — Deduped, quality</div>
+      <pre><code>doc_id        STRING -- FK → Bronze
+crawl_date    DATE   -- partition
+license       STRING -- validated
+minhash_sig   ARRAY&lt;INT64&gt; -- LSH fingerprint
+is_near_dup   BOOLEAN
+near_dup_of   STRING -- FK nếu dup
+quality_score FLOAT  -- perplexity-based
+token_count   BIGINT
+lang_verified STRING
+pii_detected  BOOLEAN
+cleaned_text  STRING
+silver_version STRING -- 'v1'</code></pre>
+    </div>
+    <div class="card gold">
+      <div class="label">🥇 Gold (eu-west-1) — Training-ready</div>
+      <pre><code>shard_id       STRING -- partition key
+doc_id         STRING -- FK → Silver
+license        STRING -- 'cc-by' | 'mit'
+token_count    BIGINT
+shard_seq      INT    -- thứ tự trong shard
+quality_tier   STRING -- 'high'|'med'
+domain         STRING
+nessie_branch  STRING -- branch khi tạo
+created_at     TIMESTAMP
+gold_version   STRING -- 'v1'</code></pre>
+    </div>
+  </div>
+  <div class="card blue" style="margin-top:12px;">
+    <div class="label">Flow data Bronze → Silver → Gold (key transformations)</div>
+    <p>
+      <strong>Bronze → Silver:</strong> (1) MinHash-LSH dedup → set <code>is_near_dup=true</code> cho dup; (2) quality score (KenLM perplexity); (3) PII detection (presidio); (4) license validation. Filter: <code>is_near_dup=false AND quality_score > 0.6 AND NOT pii_detected</code>.
+      <br><strong>Silver → Gold:</strong> (1) Filter <code>license IN ('cc-by','mit')</code>; (2) shard packing (token-boundary aware, ~1M tokens/shard); (3) Nessie commit tag per Gold snapshot.
+    </p>
+  </div>
+  <div class="insight"><code>schema_version</code> trong mỗi layer là bài học từ slide. Khi MinHash algorithm upgrade (v2), Silver schema thay đổi. Nếu không có <code>silver_version</code>, không thể replay đúng transformation.</div>
+  <div class="footer"><span>Schema design</span><span>11 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 12: Failure Modes ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>FAILURE MODES · Slide 12/16</span></div>
+  <h2>🚨 Failure Modes — 3 giờ sáng kịch bản</h2>
+
+  <div class="failure-box">
+    <div class="fm-title">💥 FM-1: Contamination report — shard lọt proprietary content</div>
+    <p>Legal team báo: shard <code>gold/shard-0042</code> chứa nội dung từ publisher X (license = proprietary, tagger_version cũ miss-classify thành <code>unknown</code> rồi manual override sai).</p>
+    <p class="fm-detect">🔍 <strong>Detect:</strong> Alert từ license_override audit log khi override count/ngày vượt threshold. Alternatively: publisher gửi DMCA notice.</p>
+    <p class="fm-rollback">↩️ <strong>Rollback:</strong> (1) <code>DELETE FROM gold WHERE shard_id='gold/shard-0042'</code> với Deletion Vectors (không rewrite toàn bộ file); (2) Nessie tag new snapshot <code>post-dmca-20260504</code>; (3) Update provenance table: <code>revoked_at</code>; (4) Thông báo training team dùng checkpoint trước Nessie tag bị ô nhiễm để re-train. <strong>SLA: &lt; 30 phút.</strong></p>
+  </div>
+
+  <div class="failure-box">
+    <div class="fm-title">💥 FM-2: MinHash version upgrade làm "dedup" sai — Silver bị mất document hợp lệ</div>
+    <p>MinHash-LSH nâng từ v1 (num_perm=128) lên v2 (num_perm=256). Job chạy lại tạo signatures khác → near-dup detection thay đổi, hàng triệu document trước đây giữ lại nay bị drop.</p>
+    <p class="fm-detect">🔍 <strong>Detect:</strong> Silver row count giảm &gt; 15% so với baseline (alert trên Delta table history metrics). Document count per crawl_date anomaly detection.</p>
+    <p class="fm-rollback">↩️ <strong>Rollback (liên quan Day 18 — time travel):</strong> <code>RESTORE TABLE silver.documents VERSION AS OF &lt;version_before_upgrade&gt;</code>. Revert xong trong &lt; 5 phút. Re-run Silver job với v1 algorithm hoặc manual review sample để quyết định nên dùng v1 hay v2 threshold.</p>
+  </div>
+
+  <div class="failure-box">
+    <div class="fm-title">💥 FM-3: Cross-region transfer thất bại — Silver EU bị stale</div>
+    <p>S3 Replication hoặc transfer job từ us-east-1 → eu-west-1 bị interrupted (network partition). Training job EU đọc Silver stale, train trên corpus thiếu 2 ngày crawl mới nhất.</p>
+    <p class="fm-detect">🔍 <strong>Detect:</strong> Nessie commit timestamp của Silver EU lag so với Silver US &gt; 4 giờ → alert. Training job check Silver EU <code>MAX(crawl_date)</code> trước khi start.</p>
+    <p class="fm-rollback">↩️ <strong>Rollback:</strong> Retry transfer job (idempotent — S3 copy with <code>--only-show-errors --exact-timestamps</code>). Training job tự động pause nếu Silver staleness &gt; threshold. Nếu training đã start trên stale data: discard checkpoint, re-train từ Nessie tag trỏ đúng Silver version.</p>
+  </div>
+
+  <div class="footer"><span>Failure modes</span><span>12 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 13: Cost Estimation ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>COST · Slide 13/16</span></div>
+  <h2>💰 Ước tính chi phí back-of-envelope</h2>
+  <table>
+    <thead>
+      <tr><th>Item</th><th>Tính toán</th><th>$/tháng</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Bronze storage (us-east-1)</td>
+        <td>30 TB × $23/TB × 7/30 ngày Standard + 30 TB × $4/TB × 23/30 ngày Glacier</td>
+        <td class="win"><strong>$161 + $92 = $253</strong></td>
+      </tr>
+      <tr>
+        <td>Silver storage (eu-west-1)</td>
+        <td>3 TB × $25/TB (EU pricing)</td>
+        <td class="mid"><strong>$75</strong></td>
+      </tr>
+      <tr>
+        <td>Gold storage (eu-west-1)</td>
+        <td>1 TB × $25/TB</td>
+        <td class="win"><strong>$25</strong></td>
+      </tr>
+      <tr>
+        <td>Cross-region transfer US→EU</td>
+        <td>~100 GB/day incremental Silver × $0.02/GB × 30 ngày</td>
+        <td class="mid"><strong>$60</strong></td>
+      </tr>
+      <tr>
+        <td>MinHash-LSH Spark job (us-east-1)</td>
+        <td>20× c5.4xlarge spot ($0.34/h) × 4h × 4 runs/tháng</td>
+        <td class="mid"><strong>$109</strong></td>
+      </tr>
+      <tr>
+        <td>Silver→Gold transform (eu-west-1)</td>
+        <td>8× r5.4xlarge spot ($0.50/h) × 2h × 4 runs/tháng</td>
+        <td class="mid"><strong>$32</strong></td>
+      </tr>
+      <tr>
+        <td>Nessie server (eu-west-1)</td>
+        <td>1× t3.large EC2 ($0.083/h) + RocksDB EBS 50 GB</td>
+        <td class="win"><strong>$65</strong></td>
+      </tr>
+      <tr>
+        <td>DuckDB ad-hoc queries (serverless)</td>
+        <td>~10 analyst queries/ngày × 100 GB scan = negligible</td>
+        <td class="win"><strong>~$15</strong></td>
+      </tr>
+      <tr style="background: rgba(201,169,97,0.1);">
+        <td><strong>TỔNG</strong></td>
+        <td></td>
+        <td><strong style="color: var(--vin-gold);">~$634/tháng</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="grid-2" style="margin-top:12px;">
+    <div class="card green">
+      <div class="label">✅ So với naive approach (transfer Bronze)</div>
+      <p>Nếu transfer 30 TB Bronze sang EU: <strong>+$600/month egress + +$690/month EU storage = +$1,290/month</strong>. Tổng sẽ thành ~$1,924/month. Quyết định "chỉ transfer Silver" tiết kiệm <strong>~67% chi phí</strong>.</p>
+    </div>
+    <div class="card orange">
+      <div class="label">📈 Scale assumptions</div>
+      <ul>
+        <li>Crawl tần suất: weekly (4 lần/tháng)</li>
+        <li>Bronze Glacier sau 7 ngày (lifecycle rule)</li>
+        <li>Gold giữ nguyên, không xóa (provenance bắt buộc)</li>
+        <li>Spot instance availability: 95% uptime</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer"><span>Cost math</span><span>13 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 14: MVP Week 1 ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>MVP · Slide 14/16</span></div>
+  <h2>🚀 MVP — Build gì trong tuần đầu?</h2>
+  <p style="margin-bottom:12px;">Không build toàn bộ — <strong>slice nhỏ nhất shippable</strong> chứng minh architecture hoạt động:</p>
+  <table>
+    <thead>
+      <tr><th>Ngày</th><th>Build gì</th><th>Done khi nào</th><th>Risk</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>D1</strong></td>
+        <td>Bronze landing: 1 CC-MAIN shard (~5 GB) → Delta table + license tagger v1</td>
+        <td>Delta table có <code>license</code> column; tagger gắn đúng cc-by/unknown</td>
+        <td><span class="pill green">low</span></td>
+      </tr>
+      <tr>
+        <td><strong>D2</strong></td>
+        <td>MinHash-LSH dedup trên 5 GB Bronze → Silver (~500 MB)</td>
+        <td>Silver row count &lt; Bronze; <code>is_near_dup=true</code> observable</td>
+        <td><span class="pill orange">med</span></td>
+      </tr>
+      <tr>
+        <td><strong>D3</strong></td>
+        <td>Nessie server (Docker local) + catalog integration với Spark</td>
+        <td>Spark đọc/ghi Delta qua Nessie REST Catalog; branch <code>main</code> hoạt động</td>
+        <td><span class="pill orange">med</span></td>
+      </tr>
+      <tr>
+        <td><strong>D4</strong></td>
+        <td>Gold filter (<code>license IN ('cc-by','mit')</code>) + Provenance table write</td>
+        <td>Provenance table có <code>checkpoint_id → shard_id → nessie_commit</code></td>
+        <td><span class="pill blue">low</span></td>
+      </tr>
+      <tr>
+        <td><strong>D5</strong></td>
+        <td><strong>Shard revert demo</strong>: inject 1 bad shard → DELETE với Deletion Vector → RESTORE</td>
+        <td>Revert hoàn chỉnh trong &lt; 30 phút; <code>history()</code> show DELETE + RESTORE version</td>
+        <td><span class="pill red">high</span></td>
+      </tr>
+      <tr>
+        <td><strong>D6</strong></td>
+        <td>License override audit log + query "shard X thuộc checkpoint nào?"</td>
+        <td>SQL query trả lời trong &lt; 5 giây</td>
+        <td><span class="pill blue">low</span></td>
+      </tr>
+      <tr>
+        <td><strong>D7</strong></td>
+        <td>Buffer: write-up + slide + PoC cleanup</td>
+        <td>Document + slide sẵn sàng nộp</td>
+        <td><span class="pill blue">low</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="insight">D5 là ngày <strong>risk cao nhất</strong> vì Deletion Vectors + Nessie RESTORE cùng lúc — chưa từng test combination này. Tôi để D7 buffer để nếu D5 trễ, vẫn kịp nộp phần còn lại. D5 cũng là phần "khó nhất cần prove" — nếu nó chạy được, cả architecture được validate.</div>
+  <div class="footer"><span>MVP plan</span><span>14 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 15: Lessons Learned ══════════════════════════ -->
+<section class="slide">
+  <div class="header"><span class="brand">VinUni AI20k</span><span>REFLECTION · Slide 15/16</span></div>
+  <h2>🎓 Lessons Learned</h2>
+  <div class="grid-2">
+    <div class="card green">
+      <div class="label">✅ Cái đã đúng</div>
+      <ul>
+        <li>Viết constraint <em>trước</em> rồi mới design — "revert &lt; 30 phút" loại ngay plain Parquet</li>
+        <li>Quyết định "transfer Silver thay vì Bronze" = $540/month saving — số cụ thể thuyết phục hơn intuition</li>
+        <li>Default license = <code>unknown</code> (conservative) thay vì <code>cc-by</code> (aggressive) tránh được FM-1</li>
+        <li>Buffer D7 — D5 là high-risk, cần slack</li>
+        <li>Mỗi layer có <code>schema_version</code> — học từ slide §23</li>
+      </ul>
+    </div>
+    <div class="card orange">
+      <div class="label">⚠️ Cái cần làm khác lần sau</div>
+      <ul>
+        <li>Lúc đầu định dùng OpenLineage cho provenance — phí 1 buổi research rồi mới nhận ra quá complex cho shard-level tracking</li>
+        <li>Quên xét latency Nessie server trong SLA 30 phút — may mà RESTORE chỉ mất &lt; 2 phút</li>
+        <li>Schema Bronze ban đầu thiếu <code>tagger_version</code> → không audit được khi tagger upgrade</li>
+      </ul>
+    </div>
+    <div class="card blue">
+      <div class="label">🔮 Future work nếu scale 10×</div>
+      <ul>
+        <li>300 TB crawl → cần Iceberg hidden partitioning (không dùng explicit <code>crawl_date</code> partition)</li>
+        <li>Streaming MinHash (Flink) thay batch Spark — latency Bronze→Silver giảm từ 4h xuống &lt;1h</li>
+        <li>License ML classifier thay heuristic tagger — độ chính xác từ 70% lên 95%</li>
+        <li>Multi-region Nessie (active-active) cho training jobs chạy ở nhiều region</li>
+      </ul>
+    </div>
+    <div class="card purple">
+      <div class="label">🧠 Insight về Day 18 concepts</div>
+      <ul>
+        <li><strong>Time travel không chỉ để debug</strong> — đây là provenance mechanism bắt buộc</li>
+        <li><strong>Medallion = separation of concerns</strong>: Bronze = immutable truth; Silver = clean; Gold = business-ready</li>
+        <li><strong>Catalog là contract</strong> — Nessie branch = version contract với training team</li>
+        <li><strong>Deletion Vectors</strong>: soft delete mà không rewrite file = revert nhanh</li>
+      </ul>
+    </div>
+  </div>
+  <div class="insight">Insight quan trọng nhất: <strong>architecture tốt = list constraints dài, không phải list features dài</strong>. Tôi có 6 quyết định, mỗi quyết định có ít nhất 2 lựa chọn bị loại với lý do <em>cụ thể từ constraint</em>, không phải opinion chung chung.</div>
+  <div class="footer"><span>Reflection</span><span>15 / 16</span></div>
+</section>
+
+<!-- ══════════════════════════ SLIDE 16: Q&A / Closing ══════════════════════════ -->
+<section class="slide title-slide">
+  <div class="badge">Q&amp;A</div>
+  <h1 style="font-size: 2.5em;">Cảm ơn!</h1>
+  <p class="subtitle">Sẵn sàng cho câu hỏi 🙋</p>
+  <div class="grid-2" style="max-width: 820px; margin-top: 20px; width: 100%;">
+    <div class="card green">
+      <div class="label">📦 Decisions đã đưa ra (6 total)</div>
+      <ul style="text-align: left; font-size: 0.9em;">
+        <li>✅ <strong>Format</strong>: Delta + UniForm (loại Iceberg, Hudi)</li>
+        <li>✅ <strong>Catalog</strong>: Nessie (loại Unity, Glue, Polaris)</li>
+        <li>✅ <strong>Dedup</strong>: MinHash-LSH (loại Exact SHA, Bloom)</li>
+        <li>✅ <strong>Multi-region</strong>: Transfer Silver only (loại Bronze transfer, dual-write)</li>
+        <li>✅ <strong>License tagging</strong>: tại Bronze (loại crawl time, Silver)</li>
+        <li>✅ <strong>Provenance</strong>: Custom table + Nessie (loại OpenLineage, MLflow)</li>
+      </ul>
+    </div>
+    <div class="card blue">
+      <div class="label">📊 Key numbers</div>
+      <ul style="text-align: left; font-size: 0.9em;">
+        <li>30 TB → 3 TB → 1 TB (10× compression qua pipeline)</li>
+        <li>~$634/month tổng chi phí (67% ít hơn naive)</li>
+        <li>&lt; 30 phút revert SLA (Deletion Vectors + Nessie RESTORE)</li>
+        <li>3 failure modes với detect + rollback plan</li>
+        <li>7-day MVP plan, D5 là ngày risk cao nhất</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top: 20px; max-width: 720px; border-left: 3px solid var(--vin-gold);">
+    <p style="font-style: italic; text-align: center; font-size: 0.95em;">
+      "Tôi không chứng minh tôi biết hết về lakehouse.<br>
+      Tôi chứng minh tôi biết <em>loại cái gì</em> và <em>vì sao</em> — đó là architect thinking."
+    </p>
+  </div>
+  <p style="margin-top: 20px; color: var(--text-muted); font-size: 0.85em;">Day 18 Bonus Challenge — Topic B: Trillion-token Training Corpus · 04/05/2026</p>
+</section>
+
+</div><!-- .deck -->
+
+<div class="nav">
+  <button onclick="prev()">◀ Trước</button>
+  <span id="counter" style="color: var(--text-muted); padding: 6px 10px; font-size: 0.9em;">1 / 16</span>
+  <button onclick="next()">Sau ▶</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let current = 0;
+  const total = slides.length;
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+
+  function show(i) {
+    slides[current].classList.remove('active');
+    current = (i + total) % total;
+    slides[current].classList.add('active');
+    counter.textContent = `${current + 1} / ${total}`;
+    progress.style.width = `${((current + 1) / total) * 100}%`;
+    slides[current].scrollTop = 0;
+  }
+  function next() { show(current + 1); }
+  function prev() { show(current - 1); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { next(); e.preventDefault(); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { prev(); e.preventDefault(); }
+    if (e.key === 'Home') { show(0); }
+    if (e.key === 'End') { show(total - 1); }
+  });
+
+  progress.style.width = `${(1 / total) * 100}%`;
+</script>
+
+</body>
+</html>
